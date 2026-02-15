@@ -23,7 +23,28 @@
 </head>
 <body>
 
-<h1>Setup Your Slots</h1>
+<div class="introduction">
+    <h2>Welcome to Your Personal Scheduler!</h2>
+    <p>
+        This website helps you plan and visualize your weekly tasks alongside your existing calendar.
+    </p>
+    <p>
+        Start by filling out the setup form with your tasks or activities. For each task, you can specify:
+    </p>
+    <ul>
+        <li><strong>Name</strong> – what the task is called</li>
+        <li><strong>Hours per week</strong> – how many hours you want to dedicate</li>
+        <li><strong>Priority level</strong> – lower numbers mean higher importance</li>
+        <li><strong>Deadline</strong> – when the task needs to be completed</li>
+        <li><strong>Maximum consecutive hours per day</strong> – how long you can work on it in a single session</li>
+    </ul>
+    <p>
+        Once you save your setup, the website will automatically schedule your tasks within your available time slots, respecting working hours and daily limits.
+    </p>
+    <p>
+        For now this website is for now a beta version (it has bare minimum to work)
+    </p>
+</div>
 
 <form method="post" id="slotsForm">
     <div id="slotsContainer">
@@ -36,7 +57,7 @@
                     Hours per week: <input type="number" name="numhoursperweek" value="{{ slot.numhoursperweek }}"><br>
                     Priority level: <input type="number" name="prioritylevel" value="{{ slot.prioritylevel }}"><br>
                     Deadline: <input type="date" name="deadline" value="{{ slot.deadline }}"><br>
-                    Consecutive hours: <input type="number" name="consecutivehours" value="{{ slot.consecutivehours }}"><br>
+                    Consecutive hours: <input type="number" name="Max consecutive hours per day" value="{{ slot.consecutivehours }}"><br>
                 </div>
             {% endfor %}
         {% else %}
