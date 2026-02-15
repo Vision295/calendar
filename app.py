@@ -3,6 +3,7 @@ from questions import load_slots, save_slots, slots_exist
 from ics import Calendar, Event
 import datetime
 import io
+import os
 
 app = Flask(__name__)
 
@@ -178,4 +179,5 @@ def setup():
     return render_template("setup.html", slots=slots)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render sets PORT
+    app.run(host="0.0.0.0", port=port, debug=True)
