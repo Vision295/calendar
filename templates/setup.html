@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup Slots</title>
+    <style>
+        .slot { 
+            margin-bottom: 20px; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            position: relative;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 2px 8px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Setup Your Slots</h1>
+
+<form method="post" id="slotsForm">
+    <div id="slotsContainer">
+        {% if slots %}
+            {% for slot in slots %}
+                <div class="slot">
+                    <button type="button" class="remove-btn" onclick="removeSlot(this)">X</button>
+                    <h3>Slot {{ loop.index }}</h3>
+                    Name: <input type="text" name="name" value="{{ slot.name }}"><br>
+                    Hours per week: <input type="number" name="numhoursperweek" value="{{ slot.numhoursperweek }}"><br>
+                    Priority level: <input type="number" name="prioritylevel" value="{{ slot.prioritylevel }}"><br>
+                    Deadline: <input type="date" name="deadline" value="{{ slot.deadline }}"><br>
+                    Consecutive hours: <input type="number" name="consecutivehours" value="{{ slot.consecutivehours }}"><br>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="slot">
+                <button type="button" class="remove-btn" onclick="removeSlot(this)">X</button>
+                <h3>Slot 1</h3>
+                Name: <input type="text" name="name"><br>
+                Hours per week: <input type="number" name="numhoursperweek"><br>
+                Priority level: <input type="number" name="prioritylevel"><br>
+                Deadline: <input type="date" name="deadline"><br>
+                Consecutive hours: <input type="number" name="consecutivehours"><br>
+            </div>
+        {% endif %}
+    </div>
+
+    <button type="button" onclick="addSlot()">Add Another Slot</button><br><br>
+    <input type="submit" value="Save Slots">
+</form>
+
+<script>
+let slotCount = {{ slots|length if slots else 1 }};
+
+function addSlot() {
+    slotCount++;
+    const container = document.getElementById("slotsContainer");
+    const div = document.createElement("div");
+    div.className = "slot";
+    div.innerHTML = `
+        <button type="button" class="remove-btn" onclick="removeSlot(this)">X</button>
+        <h3>Slot ${slotCount}</h3>
+        Name: <input type="text" name="name"><br>
+        Hours per week: <input type="number" name="numhoursperweek"><br>
+        Priority level: <input type="number" name="prioritylevel"><br>
+        Deadline: <input type="date" name="deadline"><br>
+        Consecutive hours: <input type="number" name="consecutivehours"><br>
+    `;
+    container.appendChild(div);
+}
+
+function removeSlot(btn) {
+    const slotDiv = btn.parentNode;
+    slotDiv.parentNode.removeChild(slotDiv);
+}
+</script>
+
+</body>
+</html>

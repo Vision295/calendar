@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Calendar</title>
+
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+
+    <!-- FullCalendar JS (GLOBAL bundle) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+    <style>
+        #calendar {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+        #answers {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 15px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Display answers at the top -->
+<div id="answers">
+    <h2>Setup Answers</h2>
+    <ul>
+        {% for slot in slots %}
+            <li>
+                <strong>{{ slot.name }}</strong> |
+                Hours/week: {{ slot.numhoursperweek }} |
+                Priority: {{ slot.prioritylevel }} |
+                Deadline: {{ slot.deadline }} |
+                Consecutive hours: {{ slot.consecutivehours }}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Buttons -->
+<a href="{{ url_for('setup') }}">
+    <button style="padding: 8px 16px; margin-bottom: 20px;">Change Setup</button>
+</a>
+<a href="{{ url_for('download_calendar') }}">
+    <button style="padding: 8px 16px; margin-bottom: 20px;">Download Calendar</button>
+</a>
+
+<!-- Google Calendar -->
+<div id='calendar'></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: '/events-json',
+            headerToolbar: {
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }
+      });
+
+      calendar.render();
+});
+</script>
+
+</body>
+</html>
