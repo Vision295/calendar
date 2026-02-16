@@ -6,6 +6,13 @@
             "prioritylevel": "1",
             "deadline": "2026-03-07",
             "consecutivehours": "0.5"
+        },
+        {
+            "name": "shower2",
+            "numhoursperweek": "10",
+            "prioritylevel": "1",
+            "deadline": "2026-03-07",
+            "consecutivehours": "0.5"
         }
     ]
 }
