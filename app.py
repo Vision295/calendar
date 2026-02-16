@@ -232,20 +232,48 @@ def setup():
         consecutive = request.form.getlist("consecutivehours")
 
         slots = []
-        for i in range(len(names)):
+
+        for name, hour, priority, deadline, consec in zip(
+            names, hours, priorities, deadlines, consecutive
+        ):
             slots.append({
-                "name": names[i],
-                "numhoursperweek": hours[i],
-                "prioritylevel": priorities[i],
-                "deadline": deadlines[i],
-                "consecutivehours": consecutive[i]
+                "name": name,
+                "numhoursperweek": hour,
+                "prioritylevel": priority,
+                "deadline": deadline,
+                "consecutivehours": consec or 1
             })
 
         save_slots(slots)
         return redirect(url_for("home"))
 
+    # ✅ THIS MUST EXIST
     slots = load_slots() or []
     return render_template("setup.html", slots=slots)
+
+
+#     if request.method == "POST":
+#         names = request.form.getlist("name")
+#         hours = request.form.getlist("numhoursperweek")
+#         priorities = request.form.getlist("prioritylevel")
+#         deadlines = request.form.getlist("deadline")
+#         consecutive = request.form.getlist("consecutivehours")
+
+#         slots = []
+#         for i in range(len(names)):
+#             slots.append({
+#                 "name": names[i],
+#                 "numhoursperweek": hours[i],
+#                 "prioritylevel": priorities[i],
+#                 "deadline": deadlines[i],
+#                 "consecutivehours": consecutive[i]
+#             })
+
+#         save_slots(slots)
+#         return redirect(url_for("home"))
+
+#     slots = load_slots() or []
+#     return render_template("setup.html", slots=slots)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Render sets PORT
