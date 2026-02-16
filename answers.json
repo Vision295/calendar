@@ -2,10 +2,10 @@
     "slots": [
         {
             "name": "shower",
-            "numhoursperweek": "10",
+            "numhoursperweek": "0.5",
             "prioritylevel": "1",
             "deadline": "2026-03-07",
-            "consecutivehours": "2.5"
+            "consecutivehours": "0.5"
         }
     ]
 }
