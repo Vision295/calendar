@@ -43,8 +43,8 @@ def generate_schedule(slots, existing_events=None):
     - Exclude 12:00–13:00
     - Max 8h/day including ICS
     - No overlapping with ICS or generated events
-    - numhoursperweek applies EVERY week until deadline
-    - Supports fractional consecutive hours down to 0.05h (3 min)
+    - numhoursperweek applies PER WEEK until deadline
+    - Supports fractional consecutive hours down to 0.05h
     - Minimum slot duration: 0.5h (30min)
     - 5-min breaks between different activities
     """
@@ -104,71 +104,73 @@ def generate_schedule(slots, existing_events=None):
         deadline = slot.get("deadline")
         deadline_date = datetime.date.fromisoformat(deadline) if deadline else today + datetime.timedelta(days=7)
 
-        # Compute total hours until deadline
-        total_days = (deadline_date - today).days + 1
-        total_weeks = max(1, total_days // 7 + (1 if total_days % 7 else 0))
-        total_hours = hours_per_week * total_weeks
-        hours_remaining = total_hours
-
         current_day = today
+        # Schedule week by week
+        while current_day <= deadline_date:
+            week_start = current_day
+            week_end = week_start + datetime.timedelta(days=6)
+            if week_end > deadline_date:
+                week_end = deadline_date
 
-        while hours_remaining > 0 and current_day <= deadline_date:
-            already_today = daily_hours(current_day)
-            if already_today >= daily_max:
-                current_day += datetime.timedelta(days=1)
-                continue
-
-            hours_scheduled_today = 0
-            current_time = datetime.datetime.combine(current_day, datetime.time(hour=start_hour))
-            # Align start to nearest 5 min
-            current_time = current_time.replace(minute=(current_time.minute // minute_step) * minute_step, second=0, microsecond=0)
-            end_of_day = datetime.datetime.combine(current_day, datetime.time(hour=end_hour))
-
-            while current_time < end_of_day and hours_remaining > 0 and hours_scheduled_today < max_per_day:
-                # Skip lunch
-                lunch_start_dt = datetime.datetime.combine(current_day, datetime.time(hour=lunch_start))
-                lunch_end_dt = datetime.datetime.combine(current_day, datetime.time(hour=lunch_end))
-                if current_time >= lunch_start_dt and current_time < lunch_end_dt:
-                    current_time = lunch_end_dt
+            hours_remaining_this_week = hours_per_week
+            day = week_start
+            while day <= week_end and hours_remaining_this_week > 0:
+                already_today = daily_hours(day)
+                if already_today >= daily_max:
+                    day += datetime.timedelta(days=1)
                     continue
 
-                # Determine session duration
-                max_possible = min(max_per_day - hours_scheduled_today, hours_remaining)
-                session_duration = max(min_block_hours, max_possible)
-                session_end = current_time + datetime.timedelta(hours=session_duration)
+                hours_scheduled_today = 0
+                current_time = datetime.datetime.combine(day, datetime.time(hour=start_hour))
+                current_time = current_time.replace(minute=(current_time.minute // minute_step) * minute_step, second=0, microsecond=0)
+                end_of_day = datetime.datetime.combine(day, datetime.time(hour=end_hour))
 
-                # If session crosses lunch, split
-                if current_time < lunch_start_dt < session_end:
-                    session_end = lunch_start_dt
-                    session_duration = (session_end - current_time).total_seconds() / 3600
-                    if session_duration < min_block_hours:
+                while current_time < end_of_day and hours_remaining_this_week > 0 and hours_scheduled_today < max_per_day:
+                    # Skip lunch
+                    lunch_start_dt = datetime.datetime.combine(day, datetime.time(hour=lunch_start))
+                    lunch_end_dt = datetime.datetime.combine(day, datetime.time(hour=lunch_end))
+                    if current_time >= lunch_start_dt and current_time < lunch_end_dt:
                         current_time = lunch_end_dt
                         continue
 
-                # Avoid overlap
-                if overlaps(current_time, session_end):
-                    current_time += datetime.timedelta(minutes=minute_step)
-                    continue
+                    # Determine session duration
+                    max_possible = min(max_per_day - hours_scheduled_today, hours_remaining_this_week)
+                    session_duration = max(min_block_hours, max_possible)
+                    session_end = current_time + datetime.timedelta(hours=session_duration)
 
-                # Add event
-                events.append({
-                    "title": name,
-                    "start": current_time.isoformat(),
-                    "end": session_end.isoformat(),
-                    "color": "#28a745"
-                })
-                occupied_intervals.append((current_time, session_end))
-                hours_remaining -= session_duration
-                hours_scheduled_today += session_duration
+                    # If session crosses lunch, split
+                    if current_time < lunch_start_dt < session_end:
+                        session_end = lunch_start_dt
+                        session_duration = (session_end - current_time).total_seconds() / 3600
+                        if session_duration < min_block_hours:
+                            current_time = lunch_end_dt
+                            continue
 
-                # Move current_time, add 5 min break
-                current_time = session_end + datetime.timedelta(minutes=5)
+                    # Avoid overlap
+                    if overlaps(current_time, session_end):
+                        current_time += datetime.timedelta(minutes=minute_step)
+                        continue
 
-            current_day += datetime.timedelta(days=1)
+                    # Add event
+                    events.append({
+                        "title": name,
+                        "start": current_time.isoformat(),
+                        "end": session_end.isoformat(),
+                        "color": "#28a745"
+                    })
+                    occupied_intervals.append((current_time, session_end))
+                    hours_remaining_this_week -= session_duration
+                    hours_scheduled_today += session_duration
 
-    # ---------------------
+                    # Move current_time, add 5 min break
+                    current_time = session_end + datetime.timedelta(minutes=5)
+
+                day += datetime.timedelta(days=1)
+
+            # Move to next week
+            current_day = week_end + datetime.timedelta(days=1)
+
     # Merge consecutive events of the same activity
-    # ---------------------
     merged_events = []
     events.sort(key=lambda e: (e["title"], e["start"]))
     for e in events:
@@ -182,6 +184,8 @@ def generate_schedule(slots, existing_events=None):
         merged_events.append(e)
 
     return merged_events
+
+
 
 
 # -----------------------------
