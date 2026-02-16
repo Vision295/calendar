@@ -1,6 +1,3 @@
-API_KEY = "AIzaSyAmuzdGpVwM2lwCmvxJaklP2-ZPlefHOg4"
-
-
 from ics import Calendar
 import datetime
 

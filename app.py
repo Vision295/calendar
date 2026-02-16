@@ -16,87 +16,156 @@ def load_ics_events(filename="original.ics"):
         with open(filename, "r", encoding="utf-8") as f:
             c = Calendar(f.read())
             for e in c.events:
+
+                # Convert to python datetime
+                start = e.begin.datetime
+                end = e.end.datetime
+
+                # Force remove timezone to avoid comparison issues
+                if start.tzinfo is not None:
+                    start = start.replace(tzinfo=None)
+                if end.tzinfo is not None:
+                    end = end.replace(tzinfo=None)
+
                 events.append({
                     "title": e.name,
-                    "start": e.begin.isoformat(),
-                    "end": e.end.isoformat(),
+                    "start": start.isoformat(),
+                    "end": end.isoformat(),
                     "color": "#3788d8"
                 })
+
     except FileNotFoundError:
         pass
+
     return events
 
-# -----------------------------
-# Algorithm to generate schedule
-# -----------------------------
+
 def generate_schedule(slots, existing_events=None):
     """
-    Schedule slots considering:
-    - Working hours 9AM-10PM, exclude 12-13
-    - Max 8 hours/day including existing events from ICS
-    - Max per day = consecutivehours
-    - Allow sacrifice
+    Conflict-safe scheduling:
+    - Working hours: 9:00–22:00
+    - Exclude 12:00–13:00
+    - Max 8h/day including ICS
+    - No overlapping with ICS or generated events
+    - numhoursperweek applies EVERY week until deadline
     """
+
     events = []
     today = datetime.date.today()
     start_hour = 9
     end_hour = 22
-    lunch_hour = 12
+    lunch_start = 12
+    lunch_end = 13
     daily_max = 8
 
-    # Build occupied map
-    occupied = {}  # {date: set(hours)}
+    occupied_intervals = []
+
+    # ---------------------------------
+    # Load existing ICS events
+    # ---------------------------------
     if existing_events:
         for e in existing_events:
             start = datetime.datetime.fromisoformat(e["start"])
             end = datetime.datetime.fromisoformat(e["end"])
-            day = start.date()
-            occupied.setdefault(day, set())
-            h = start.hour
-            while h < end.hour:
-                if h != lunch_hour:
-                    occupied[day].add(h)
-                h += 1
 
-    # Sort slots by priority
+            if start.tzinfo:
+                start = start.replace(tzinfo=None)
+            if end.tzinfo:
+                end = end.replace(tzinfo=None)
+
+            occupied_intervals.append((start, end))
+
+    # ---------------------------------
+    # Helpers
+    # ---------------------------------
+    def overlaps(start, end):
+        for s, e in occupied_intervals:
+            if start < e and s < end:
+                return True
+        return False
+
+    def daily_hours(day):
+        total = 0
+        for s, e in occupied_intervals:
+            if s.date() == day:
+                total += (e - s).total_seconds() / 3600
+        return total
+
     sorted_slots = sorted(slots, key=lambda s: int(s.get("prioritylevel", 5)))
 
+    # ---------------------------------
+    # Main scheduling loop
+    # ---------------------------------
     for slot in sorted_slots:
         name = slot["name"]
-        total_hours = int(slot.get("numhoursperweek", 1))
+        hours_per_week = int(slot.get("numhoursperweek", 1))
         max_per_day = int(slot.get("consecutivehours", 1))
         deadline = slot.get("deadline")
-        deadline_date = datetime.date.fromisoformat(deadline) if deadline else today + datetime.timedelta(days=7)
 
+        deadline_date = (
+            datetime.date.fromisoformat(deadline)
+            if deadline else today + datetime.timedelta(days=7)
+        )
+
+        # ✅ Compute number of weeks until deadline
+        total_days = (deadline_date - today).days + 1
+        total_weeks = max(1, total_days // 7 + (1 if total_days % 7 else 0))
+
+        total_hours = hours_per_week * total_weeks
         hours_remaining = total_hours
+
         current_day = today
 
         while hours_remaining > 0 and current_day <= deadline_date:
-            occupied.setdefault(current_day, set())
-            # available hours for the day
-            available_hours = [h for h in range(start_hour, end_hour) if h != lunch_hour and h not in occupied[current_day]]
-            max_today = min(max_per_day, len(available_hours), daily_max - len(occupied[current_day]))
-            if max_today <= 0:
+
+            already_today = daily_hours(current_day)
+
+            if already_today >= daily_max:
                 current_day += datetime.timedelta(days=1)
                 continue
 
-            for h in available_hours[:max_today]:
-                start_dt = datetime.datetime.combine(current_day, datetime.time(hour=h))
+            hours_scheduled_today = 0
+
+            for h in range(start_hour, end_hour):
+
+                if lunch_start <= h < lunch_end:
+                    continue
+
+                if hours_scheduled_today >= max_per_day:
+                    break
+
+                if already_today >= daily_max:
+                    break
+
+                start_dt = datetime.datetime.combine(
+                    current_day,
+                    datetime.time(hour=h)
+                )
                 end_dt = start_dt + datetime.timedelta(hours=1)
+
+                if overlaps(start_dt, end_dt):
+                    continue
+
                 events.append({
                     "title": name,
                     "start": start_dt.isoformat(),
                     "end": end_dt.isoformat(),
                     "color": "#28a745"
                 })
-                occupied[current_day].add(h)
+
+                occupied_intervals.append((start_dt, end_dt))
+
                 hours_remaining -= 1
+                hours_scheduled_today += 1
+                already_today += 1
+
                 if hours_remaining <= 0:
                     break
 
             current_day += datetime.timedelta(days=1)
 
     return events
+
 
 # -----------------------------
 # Routes

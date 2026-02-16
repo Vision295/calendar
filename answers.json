@@ -1,3 +1,11 @@
 {
-    "slots": []
+    "slots": [
+        {
+            "name": "shower",
+            "numhoursperweek": "10",
+            "prioritylevel": "1",
+            "deadline": "2026-02-28",
+            "consecutivehours": "2"
+        }
+    ]
 }
