@@ -54,10 +54,12 @@
                     <button type="button" class="remove-btn" onclick="removeSlot(this)">X</button>
                     <h3>Slot {{ loop.index }}</h3>
                     Name: <input type="text" name="name" value="{{ slot.name }}"><br>
-                    Hours per week: <input type="number" name="numhoursperweek" value="{{ slot.numhoursperweek }}"><br>
+                    Hours per week: 
+                    <input type="number" name="numhoursperweek" value="{{ slot.numhoursperweek }}" step="any" min="0.5"><br>
                     Priority level: <input type="number" name="prioritylevel" value="{{ slot.prioritylevel }}"><br>
                     Deadline: <input type="date" name="deadline" value="{{ slot.deadline }}"><br>
-                    Consecutive hours: <input type="number" name="consecutivehours" value="{{ slot.consecutivehours }}"><br>
+                    Consecutive hours (can be decimal, e.g., 1.5 = 1h30): 
+                    <input type="number" name="consecutivehours" value="{{ slot.consecutivehours }}" step="any" min="0.5"><br>
                 </div>
             {% endfor %}
         {% else %}
@@ -65,10 +67,12 @@
                 <button type="button" class="remove-btn" onclick="removeSlot(this)">X</button>
                 <h3>Slot 1</h3>
                 Name: <input type="text" name="name"><br>
-                Hours per week: <input type="number" name="numhoursperweek"><br>
+                Hours per week: 
+                <input type="number" name="numhoursperweek" value="{{ slot.numhoursperweek }}" step="any" min="0.5"><br>
                 Priority level: <input type="number" name="prioritylevel"><br>
                 Deadline: <input type="date" name="deadline"><br>
-                Consecutive hours: <input type="number" name="consecutivehours"><br>
+                Consecutive hours (can be decimal, e.g., 1.5 = 1h30): 
+                <input type="number" name="consecutivehours" value="{{ slot.consecutivehours }}" step="any" min="0.5"><br>
             </div>
         {% endif %}
     </div>
@@ -89,10 +93,9 @@ function addSlot() {
         <button type="button" class="remove-btn" onclick="removeSlot(this)">X</button>
         <h3>Slot ${slotCount}</h3>
         Name: <input type="text" name="name"><br>
-        Hours per week: <input type="number" name="numhoursperweek"><br>
-        Priority level: <input type="number" name="prioritylevel"><br>
+        Hours per week: <input type="number" name="numhoursperweek" step="any" min="0.5"><br>
+        Consecutive hours: <input type="number" name="consecutivehours" step="any" min="0.5"><br>
         Deadline: <input type="date" name="deadline"><br>
-        Consecutive hours: <input type="number" name="consecutivehours"><br>
     `;
     container.appendChild(div);
 }

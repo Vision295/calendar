@@ -5,14 +5,7 @@
             "numhoursperweek": "10",
             "prioritylevel": "1",
             "deadline": "2026-03-07",
-            "consecutivehours": "2"
-        },
-        {
-            "name": "somethingelse",
-            "numhoursperweek": "10",
-            "prioritylevel": "2",
-            "deadline": "2026-03-07",
-            "consecutivehours": "3"
+            "consecutivehours": "2.5"
         }
     ]
 }
